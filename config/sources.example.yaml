@@ -78,6 +78,11 @@ sources:
     type: local
     path: ~/Projects/api-service
 
+    write:
+      enabled: true
+      allowOverwrite: true
+      createDirs: true
+
   shared-network:
     type: network
     path: /Volumes/Engineering/shared-platform

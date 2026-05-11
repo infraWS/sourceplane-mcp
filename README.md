@@ -8,7 +8,9 @@
 
 Secure multi-source MCP server for local repositories, GitHub, GitLab, Bitbucket, and mounted network workspaces.
 
-Sourceplane MCP provides a consistent, read-only Model Context Protocol interface for safely exposing source code and documentation to MCP-compatible AI clients such as Claude Desktop.
+Sourceplane MCP provides a consistent Model Context Protocol interface for safely exposing source code and documentation to MCP-compatible AI clients such as Claude Desktop.
+
+The platform is read-only by default, with optional local-only development write support.
 
 It is designed specifically for source context and repository inspection — not platform automation.
 
@@ -32,7 +34,7 @@ AI assistants are significantly more useful when they can safely inspect source 
 
 Sourceplane MCP focuses on:
 
-- read-only access
+- read-only-by-default access
 - explicit source allowlisting
 - filesystem safety
 - secure defaults
@@ -82,7 +84,7 @@ They are not arbitrary internet URLs.
 | Branch override | Yes | Yes | Yes | Yes | No | No |
 | Built-in blocklist | Yes | Yes | Yes | Yes | Yes | Yes |
 | Source-specific blocklist | Yes | Yes | Yes | Yes | Yes | Yes |
-| Write operations | No | No | No | No | No | No |
+| Write operations | No | No | No | No | Optional local-only | No |
 
 ---
 
@@ -96,6 +98,7 @@ They are not arbitrary internet URLs.
 | `list_files` | List files in a directory |
 | `get_source_structure` | Get recursive source tree |
 | `search_code` | Search source code |
+| `write_file` | Write a UTF-8 text file to an explicitly writable local source |
 
 All tools use the same source-key model:
 
@@ -242,11 +245,70 @@ sources:
     type: local
     path: ~/Projects/api-service
 
+    write:
+      enabled: false
+      allowOverwrite: false
+      createDirs: false
+
   shared-network:
     type: network
     path: /Volumes/Engineering/shared-platform
 ```
 
+---
+
+## Local Development Write Support
+
+Sourceplane MCP is read-only by default.
+
+Local filesystem sources can explicitly opt into controlled write access for development workflows.
+
+Write support is:
+
+- disabled by default
+- available only for `local` sources
+- not supported for Git providers
+- not supported for network sources
+- protected by the same path safety and blocklist rules as read operations
+
+Supported operations:
+
+- UTF-8 text file writes
+- optional overwrites
+- optional parent directory creation
+
+Unsupported operations:
+
+- file deletion
+- renames
+- shell execution
+- binary writes
+- permission modification
+
+### Example Writable Local Source
+
+```yaml
+sources:
+
+  local-dev:
+    type: local
+    path: ~/Projects/my-app
+
+    write:
+      enabled: true
+      allowOverwrite: true
+      createDirs: true
+```
+
+### Example `write_file`
+
+```json
+{
+  "sourceKey": "local-dev",
+  "path": "src/generated/example.ts",
+  "content": "export const example = true;\n"
+}
+```
 ---
 
 ## Security Model
@@ -255,7 +317,7 @@ Sourceplane MCP is intentionally restrictive.
 
 It does not:
 
-- write files
+- write files outside explicitly writable local sources
 - create commits
 - open pull requests
 - merge pull requests
@@ -267,6 +329,14 @@ It does not:
 - modify repositories
 
 Only explicitly configured sources are accessible.
+
+Even when write support is enabled for local sources, writes remain constrained to the configured source root and continue to enforce:
+
+- traversal protection
+- blocklist enforcement
+- binary detection
+- path normalization
+- UTF-8 text-only writes
 
 ---
 
@@ -418,7 +488,7 @@ Sourceplane MCP favors:
 
 - explicit configuration
 - least privilege
-- read-only access
+- read-only-by-default access
 - secure defaults
 - predictable behavior
 - local-first workflows

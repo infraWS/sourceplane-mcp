@@ -909,3 +909,83 @@ export function listSources(config: Config): string {
     })
     .join("\n\n");
 }
+
+export async function writeSourceFile(
+  config: Config,
+  sourceKey: string,
+  filePath: string,
+  content: string
+): Promise<string> {
+  const source = getSource(config, sourceKey);
+
+  if (source.type !== "local") {
+    throw new Error("write_file is only supported for local sources");
+  }
+
+  if (!source.write.enabled) {
+    throw new Error(`Writes are not enabled for source: ${sourceKey}`);
+  }
+
+  if (filePath.endsWith("/")) {
+    throw new Error(`Trailing slash on file path is not allowed: ${filePath}`);
+  }
+
+  const normalizedFilePath = canonicalizeRelativePath(filePath);
+
+  if (isBlockedPath(normalizedFilePath, source.pathBlocklist)) {
+    throw new Error(`Path is blocked by configuration: ${normalizedFilePath}`);
+  }
+
+  const resolvedPath = resolveSafeLocalPath(source, normalizedFilePath);
+  const parentDir = path.dirname(resolvedPath);
+
+  try {
+    const existingStat = await fsp.lstat(resolvedPath);
+
+    if (!existingStat.isFile()) {
+      throw new Error(`${normalizedFilePath} exists but is not a file`);
+    }
+
+    if (!source.write.allowOverwrite) {
+      throw new Error(`File already exists and overwrite is disabled: ${normalizedFilePath}`);
+    }
+  } catch (error: any) {
+    if (error?.code !== "ENOENT") {
+      throw error;
+    }
+  }
+
+  if (source.write.createDirs) {
+    await fsp.mkdir(parentDir, { recursive: true });
+  } else {
+    try {
+      const parentStat = await fsp.stat(parentDir);
+
+      if (!parentStat.isDirectory()) {
+        throw new Error(`Parent path is not a directory: ${path.dirname(normalizedFilePath)}`);
+      }
+    } catch (error: any) {
+      if (error?.code === "ENOENT") {
+        throw new Error(
+          `Parent directory does not exist and createDirs is disabled: ${path.dirname(normalizedFilePath)}`
+        );
+      }
+
+      throw error;
+    }
+  }
+
+  const buffer = Buffer.from(content, "utf8");
+
+  assertTextBuffer(buffer, normalizedFilePath);
+
+  const maxBytes = source.maxFileSizeKb * 1024;
+
+  if (buffer.length > maxBytes) {
+    throw new Error(`${normalizedFilePath} exceeds max file size of ${source.maxFileSizeKb}KB`);
+  }
+
+  await fsp.writeFile(resolvedPath, content, "utf8");
+
+  return `Wrote ${normalizedFilePath}`;
+}

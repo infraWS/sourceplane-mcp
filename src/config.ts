@@ -19,6 +19,12 @@ export type DefaultsConfig = {
   pathBlocklist?: string[];
 };
 
+export type LocalWriteConfig = {
+  enabled?: boolean;
+  allowOverwrite?: boolean;
+  createDirs?: boolean;
+};
+
 export type GitHubSourceConfig = {
   type: "github";
   host?: string;
@@ -59,6 +65,7 @@ export type FilesystemSourceConfig = {
   maxFileSizeKb?: number;
   maxFiles?: number;
   followSymlinks?: boolean;
+  write?: LocalWriteConfig;
 };
 
 export type SourceConfig =
@@ -116,6 +123,11 @@ export type ResolvedFilesystemSource = {
   maxFiles: number;
   followSymlinks: boolean;
   pathBlocklist: string[];
+  write: {
+    enabled: boolean;
+    allowOverwrite: boolean;
+    createDirs: boolean;
+  };
 };
 
 export type ResolvedSource =
@@ -258,6 +270,11 @@ export function getSource(config: Config, sourceKey: string): ResolvedSource {
     maxFileSizeKb: source.maxFileSizeKb ?? defaults.maxFileSizeKb ?? 512,
     maxFiles: source.maxFiles ?? defaults.maxFiles ?? 1000,
     followSymlinks: source.followSymlinks ?? defaults.followSymlinks ?? false,
-    pathBlocklist: inheritedBlocklist
+    pathBlocklist: inheritedBlocklist,
+    write: {
+      enabled: source.type === "local" ? source.write?.enabled ?? false : false,
+      allowOverwrite: source.write?.allowOverwrite ?? false,
+      createDirs: source.write?.createDirs ?? false
+    }
   };
 }

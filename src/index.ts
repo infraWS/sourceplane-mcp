@@ -11,13 +11,21 @@ import {
   listSourceFiles,
   listSources,
   readSourceFile,
-  searchCode
+  searchCode,
+  writeSourceFile
 } from "./sources.js";
 
 const READ_ONLY_ANNOTATIONS = {
   readOnlyHint: true,
   destructiveHint: false,
   idempotentHint: true,
+  openWorldHint: false
+};
+
+const WRITE_ANNOTATIONS = {
+  readOnlyHint: false,
+  destructiveHint: true,
+  idempotentHint: false,
   openWorldHint: false
 };
 
@@ -191,6 +199,31 @@ export function createServer(configPath?: string) {
           query,
           maxResults,
           branch
+        )
+      );
+    }
+  );
+
+  server.registerTool(
+    "write_file",
+    {
+      title: "Write File",
+      description:
+        "Write a UTF-8 text file to a local source. Disabled by default and only available for local sources with write.enabled=true.",
+      inputSchema: {
+        sourceKey: z.string(),
+        path: z.string(),
+        content: z.string()
+      },
+      annotations: WRITE_ANNOTATIONS
+    },
+    async ({ sourceKey, path, content }) => {
+      return text(
+        await writeSourceFile(
+          config,
+          sourceKey,
+          path,
+          content
         )
       );
     }
