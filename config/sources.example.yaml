@@ -1,0 +1,83 @@
+server:
+  name: repo-context-mcp
+  version: 1.0.0
+
+defaults:
+  owner: my-org
+  defaultBranch: main
+  maxFileSizeKb: 512
+  maxFiles: 1000
+  followSymlinks: false
+
+  pathBlocklist:
+    - .env
+    - .env.*
+    - secrets/
+    - certificates/
+    - private/
+    - "*.pem"
+    - "*.key"
+    - "*.p12"
+    - terraform.tfstate
+    - terraform.tfstate.*
+    - "*.tfvars"
+
+sources:
+
+  github-public:
+    type: github
+    owner: nodejs
+    name: node
+    defaultBranch: main
+
+  github-private:
+    type: github
+    name: terraform-platform
+    token: ${GITHUB_TOKEN}
+
+  github-enterprise:
+    type: github
+    host: https://github.company.com/api/v3
+    webUrl: https://github.company.com
+    owner: platform
+    name: terraform-platform
+    token: ${GITHUB_ENTERPRISE_TOKEN}
+
+  gitlab-public:
+    type: gitlab
+    projectId: gitlab-org/gitlab
+    defaultBranch: master
+
+  gitlab-private:
+    type: gitlab
+    projectId: my-org/backend-api
+    token: ${GITLAB_TOKEN}
+
+  gitlab-self-managed:
+    type: gitlab
+    host: https://gitlab.company.com
+    webUrl: https://gitlab.company.com
+    projectId: platform/backend-api
+    token: ${GITLAB_SELF_MANAGED_TOKEN}
+
+  bitbucket-cloud:
+    type: bitbucket
+    workspace: engineering
+    slug: frontend-app
+    token: ${BITBUCKET_TOKEN}
+
+  bitbucket-datacenter:
+    type: bitbucket
+    host: https://bitbucket.company.com/rest/api/1.0
+    webUrl: https://bitbucket.company.com
+    projectKey: PLATFORM
+    slug: frontend-app
+    token: ${BITBUCKET_DC_TOKEN}
+
+  local-api:
+    type: local
+    path: ~/Projects/api-service
+
+  shared-network:
+    type: network
+    path: /Volumes/Engineering/shared-platform

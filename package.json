@@ -1,0 +1,69 @@
+{
+  "name": "sourceplane-mcp",
+  "version": "1.0.0-beta.1",
+  "description": "Secure multi-source MCP server for local repositories, GitHub, GitLab, and Bitbucket",
+  "type": "module",
+  "main": "dist/index.js",
+  "author": "infraWS",
+  "license": "MIT",
+  "homepage": "https://github.com/infraWS/sourceplane-mcp",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/infraWS/sourceplane-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/infraWS/sourceplane-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "anthropic",
+    "github",
+    "gitlab",
+    "bitbucket",
+    "filesystem",
+    "repository",
+    "code-search",
+    "developer-tools",
+    "ai",
+    "llm",
+    "source-code"
+  ],
+  "bin": {
+    "sourceplane-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "npm run clean && npm run build:ts && npm run build:config",
+    "build:ts": "tsc",
+    "build:config": "mkdir -p dist/config && cp config/sources.example.yaml dist/config/ && cp config/sources.yaml dist/config/ 2>/dev/null || true",
+    "start": "node dist/index.js",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@octokit/rest": "^22.0.1",
+    "dotenv": "^16.5.0",
+    "yaml": "^2.8.4",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@vitest/coverage-v8": "^4.1.5",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
